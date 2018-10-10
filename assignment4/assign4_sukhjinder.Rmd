@@ -1,0 +1,291 @@
+---
+title: 'CptS 575: Data Science, Fall 2018'
+author: "Sukhjinder Singh"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+Date: October 05,2018
+---
+__________________________________________________________________________________________________________________________________________________
+                             
+                             Assignment 4: Linear Regression
+
+__________________________________________________________________________________________________________________________________________________                                  
+#Problem 1
+This question involves the use of multiple linear regression on the Auto data set from the course webpage (https://scads.eecs.wsu.edu/index.php/datasets/). Ensure that you remove missing values from the dataframe, and that values are represented in the appropriate types (num or int for quantitative variables, factor, logi or str for qualitative). 
+
+```{r}
+Auto = read.csv("Auto.csv", header = T, na.strings = "?")
+
+
+```
+
+**a).Produce a scatterplot matrix which includes all of the variables in the data set.**
+
+```{r}
+pairs(Auto)
+Auto <- na.omit(Auto)
+```
+
+**b).Compute the matrix of correlations between the variables using the function cor(). You will need to exclude the name variable, which is qualitative.**
+
+```{r}
+cor(Auto[sapply(Auto, function(x) !is.factor(x))])
+```
+
+**C).Use the lm() function to perform a multiple linear regression with mpg as the response and all other variables except name as the predictors. Use the summary() function to print the results. Comment on the output: **
+
+```{r}
+model = lm(mpg ~. -name, data = Auto)
+summary(model)
+```
+
+**i).Which predictors appear to have a statistically significant relationship to the response, and how do you determine this? **
+
+
+    The low p-values for displacement, weight, year, and origin indicate a statistically significant relationship to mpg.The predictors that have the highest statstical sginficance are: weight, year and origin. This makes intuitive sense, as lighter cars would logically have better mpg and more modern cars employ better gas-saving technology. displacement and horsepower are also sgificant at the .05 level.
+
+**ii).What does the coefficient for the cylinders variable suggest, in simple terms?**
+
+    The coefficient ot the “cylinder” variable suggests that the average effect of an increase of 1 year is an decrease of 0.493376 in “mpg” (all other predictors remaining constant).
+
+**d).Use the plot() function to produce diagnostic plots of the linear regression fit. Comment on any problems you see with the fit. Do the residual plots suggest any unusually large outliers? Does the leverage plot identify any observations with unusually high leverage?**
+
+```{r}
+par(mfrow=c(2,2))
+plot(model)
+```
+
+
+I have come up with diifferent comments based on these graphs. 
+
+    1). On-linearity of response-predictors values
+        There does not seems to be any pattern for Residuals vs Fitted graph, so it points no strong evidence of non-linearity.
+
+    2). Non-constant Variance of Error Terms
+        There is a bit of funnel shape(assume) for the Residuals vs Fitted graph, so it presents a bit of heteroscedasticity.
+
+    3).High Leverage Points
+        Specifically the observation 14 is a highly leverage point as shown in Residuals vc Leverage graph.
+
+
+
+**e).Use the '\*' and : symbols to fit linear regression models with interaction effects. Do any interactions appear to be statistically significant?**
+
+```{r}
+autolm3 = lm(mpg ~ (.-name)*(.-name), data = Auto)
+summary(autolm3)
+
+```
+
+    If we look into the model then we had an improvement in R2 from 0.82 to almost 0.89, maybe it can be overfitting, though the interactive term most significant was acceleration:origin with a good coefficient in comparison with the main terms and a small p-value, validating thecoefficient.If we check the interactions between displacement and year, acceleration and year, and acceleration and origin all have low p values that indicate significance.
+
+**f).Try transformations of the variables with X3 and log(X). Comment on your findings.**
+
+```{r}
+par(mfrow = c(2, 2))
+autolmx2 <- lm(mpg ~ (horsepower)^3 + (weight)^3 + (acceleration)^3, data = Auto)
+summary(autolmx2)
+```
+
+
+```{r}
+autolmlog <- lm(mpg ~ log(horsepower) + log(weight) + log(acceleration), data = Auto)
+summary(autolmlog)
+```
+
+
+    After applying the log function to each of the variables which resulted into the highest R2 value and F-statistic. It also provided the lowest individual p-values for horsepower and acceleration while squaring the weight variable resulted in the lowest p-value.
+
+#Problem 2
+
+This problem involves the Boston data set, which we saw in the lab. We will now try to predict per capita crime rate using the other variables in this data set. In other words, per capita crime rate is the response, and the other variables are the predictors.
+
+
+```{r}
+library(MASS)
+attach(Boston)
+summary(Boston)
+```
+
+a). For each predictor, fit a simple linear regression model to predict the response. Include the code, but not the output for all models in your solution. 
+
+
+**Include the code for all the model**
+```{r}
+#First Model
+fitresultzn <- lm(crim ~ zn)
+#Second model
+fitresultindus <- lm(crim ~ indus)
+#Third Model
+chas <- as.factor(chas)
+#Fourth Model
+fitresultchas <- lm(crim ~ chas)
+#Fifth Model
+fitresultnox <- lm(crim ~ nox)
+#6th Model
+fitresultrm <- lm(crim ~ rm)
+#7th model
+fitresultage <- lm(crim ~ age)
+#8th Model
+fitresultdis <- lm(crim ~ dis)
+#9th Model
+fitresultrad <- lm(crim ~ rad)
+#10th Model
+fitresulttax <- lm(crim ~ tax)
+#11th Model
+fitresultmedv <- lm(crim ~ medv)
+#12thmodel
+fitresultptratio = lm(crim ~ ptratio)
+#13th model
+fitresultblack = lm(crim ~ black)
+#14th model
+fitresultlstat = lm(crim ~ lstat)
+```
+
+**In which of the models is there a statistically significant association between the predictor and the response?**
+
+    To find which model has significant association between the predictor and the response, we have to test H0:β1=0. All predictors have a p-value less than 0.05 except “chas”, so we may conclude that there is a statistically significant association between each predictor and the response except for the “chas” predictor.
+
+**Considering the meaning of each variable, discuss the relationship between crim and nox, chas, medv and dis in particular. How do these relationships differ?**
+
+I have considered following relationships when I saw the dataset and run the linear model to check the relationships.
+
+    1).We can see that there is a strong correlation between the predictor and the response for every variable apart from the Charles River Dummy. 
+    2). Linear regression with the response variables vs crime in simple scatter-plots gives us a better prediction of crime than just using the mean of crime. 
+    3).The low R(squared) indicates that the level of the variation in the response described by these predictors is also very low. 
+    4).When looking at the response variables and crime in simple scatter plots, one can see how a general linear regression with these variables would allow for a better prediction of crime than simply using the mean of crime. That is, the data seems to have some slight shape sloping up or down, and isn’t a random cloud of data. That being said, while almost every variable is statistically significant, R-squared is very low, and so these predictors only describe a small amount of the variation in the response.
+
+```{r}
+fitresultnox <- lm(crim ~ nox)
+summary(fitresultnox)
+
+chas <- as.factor(chas)
+fitresultchas <- lm(crim ~ chas)
+summary(fitresultchas)
+
+fit.medv <- lm(crim ~ medv)
+summary(fitresultmedv)
+
+fitresultdis <- lm(crim ~ dis)
+summary(fitresultdis)
+```
+
+**b).Fit a multiple regression model to predict the response using all of the predictors. Describe your results. For which predictors can we reject the null hypothesis H0 : βj = 0?**
+
+```{r}
+fit.all <- lm(crim ~ ., data = Boston)
+summary(fit.all)
+```
+
+    As we fit the multiple regression model, very few variables appear to be statistically significant at the following levels:
+    dis- .001, rad- .001, medv – .01, black – .05 and zn -.05. In this case R squared is significantly higher than either of the predictors.
+    For every other variable, The Null Hypothesis cannot be rejected for all other variables. R-squared is also much higher using a multiple   regression model than any of the  predictors on their own, meaning we better explain more of the variance in the outcome.
+
+**c).How do your results from (a) compare to your results from (b)? Create a plot displaying the univariate regression coefficients from (a) on the x-axis, and the multiple regression coefficients from (b) on the y-axis. That is, each predictor is displayed as a single point in the plot. Its coefficient in a simple linear regression model is shown on the x-axis, and its coefficient estimate in the multiple linear regression model is shown on the y-axis. What does this plot tell you about the various predictors?**
+
+```{r}
+univcoof=c(coefficients(fitresultzn)[2],
+      coefficients(fitresultindus)[2],
+      coefficients(fitresultchas)[2],
+      coefficients(fitresultnox)[2],
+      coefficients(fitresultrm)[2],
+      coefficients(fitresultage)[2],
+      coefficients(fitresultdis)[2],
+      coefficients(fitresultrad)[2],
+      coefficients(fitresulttax)[2],
+      coefficients(fitresultptratio)[2],
+      coefficients(fitresultblack)[2],
+      coefficients(fitresultlstat)[2],
+      coefficients(fitresultmedv)[2])
+
+fooBoston <- (lm(crim ~., data = Boston))
+
+fooBoston$coefficients[2:14]
+
+plot(univcoof,fooBoston$coefficients[2:14],main = "univariate vs. muliple regression coefficient",xlab = "univarte",ylab = "multiple",col="red")
+```
+
+    If we look into the plots, then there is a difference between the simple and multiple regression coefficients. This difference is due to the fact that in the simple regression case, the slope term represents the average effect of an increase in the predictor, ignoring other predictors. 
+
+    In contrast, in the multiple regression case, the slope term represents the average effect of an increase in the predictor, while holding other predictors fixed. It does make sense for the multiple regression to suggest no relationship between the response and some of the predictors while the simple linear regression implies the opposite because the correlation between the predictors show some strong relationships between some of the predictors.
+
+
+```{r}
+cor(Boston[-c(1, 4)])
+```
+**For example,**
+
+    when “age” is high there is a tendency in “dis” to be low, hence we can say in simple linear regression which only examines “crim” versus “age”, we can observe that there is higher values of “age” are associated with higher values of “crim”, even though “age” does not actually affect “crim”.So “age” is a surrogate for “dis”; “age” gets credit for the effect of “dis” on “crim”.
+
+**d).Is there evidence of non-linear association between any of the predictors and the response? To answer this question, for each predictor X, fit a model of the form Y = β0 + β1X + β2X2 + β3X3+ ε**
+
+```{r}
+y=lm(crim ~ zn + I(zn^2) + I(zn^3), data = Boston)
+y=lm(crim ~ indus + I(indus^2) + I(indus^3), data = Boston)
+y=lm(crim ~ chas + I(chas^2) + I(chas^3), data = Boston)
+y=lm(crim ~ nox + I(nox^2) + I(nox^3), data = Boston)
+y=lm(crim ~ rm + I(rm^2) + I(rm^3), data = Boston)
+y=lm(crim ~ age + I(age^2) + I(age^3), data = Boston)
+y=lm(crim ~ dis + I(dis^2) + I(dis^3), data = Boston)
+y=lm(crim ~ rad + I(rad^2) + I(rad^3), data = Boston)
+y=lm(crim ~ tax + I(tax^2) + I(tax^3), data = Boston)
+y=lm(crim ~ ptratio + I(ptratio^2) + I(ptratio^3), data = Boston)
+y=lm(crim ~ black + I(black^2) + I(black^3), data = Boston)
+y=lm(crim ~ lstat + I(lstat^2) + I(lstat^3), data = Boston)
+y=lm(crim ~ medv + I(medv^2) + I(medv^3), data = Boston)
+```
+
+Observing the results,
+
+    The first thing to note is the chas variable, we get NA values for the squared and cubed term. This makes sense as chas is a dummy variable, composed of only 0s and 1s, and these values will not change if they are squared or cubed.I come up with some analysis results such as For “zn”, “rm”, “rad”, “tax” and “lstat” as predictor, the p-values suggest that the cubic coefficient is not statistically significant; however,for “indus”, “nox”, “age”, “dis”, “ptratio” and “medv” as predictor, the p-values suggest the adequacy of the cubic fit;Similarly, for “black” as predictor, the p-values suggest that the quandratic and cubic coefficients are not statistically significant, so in this latter case no non-linear effect is visible.
+
+
+#Problem 3
+
+An important assumption of the linear regression model is that the error terms are uncorrelated (independent). But error terms can sometimes be correlated, especially in time-series data.
+
+**a).What are the issues that could arise in using linear regression (via least squares estimates) when error terms are correlated? Comment in particular with respect to i) regression coefficients ii) the standard error of regression coefficients iii) confidence intervals**
+
+Solution:   
+
+**(i) Regression Coefficients**
+
+    Regression coefficients represent the mean change in the response variable for one unit of change in the predictor variable while holding other predictors in the model constant. This statistical control that regression provides is important because it isolates the role of one variable from all of the others in the model
+
+    Multicolinearity is often at the source of the problem when a positive simple correlation with the dependent variable leads to a negative regression coefficient in multiple regression. Some regression techniques may help there : ridge regression, partial least square regression. Start by finding out which variable(s) are causing the colinearity (i.e with the inflation or the distortion factor).  Remove them or attenuate the correlation with the ridge coefficient.
+
+**(ii) Standard error of regression coefficients**
+
+    The sample standard deviation of the errors is a downward-biased estimate of the size of the true unexplained deviations in Y because it does not adjust for the additional "degree of freedom" used up by estimating the slope coefficient. An unbiased estimate of the standard deviation of the true errors is given by the standard error of the regression, denoted by s. In the special case of a simple regression model, it is:
+
+**Standard error of regression coefficient = STDEV.S(errors) x SQRT((n-1)/(n-2))**
+
+    The sum of squared errors is divided by n-2 in this calculation rather than n-1 because an additional degree of freedom for error has been used up by estimating two parameters (a slope and an intercept) rather than only one (the mean) in fitting the model to the data. The standard error of the regression is an unbiased estimate of the standard deviation of the noise in the data, i.e., the variations in Y that are not explained by the model. 
+
+**For Example :**
+
+    When multicollinearity occurs, the least-squares estimates are still unbiased and efficient. The problem is that the estimated standard errors of the coefficients tend to be inflated.  That is, the standard error tends to be larger than it would be in the absence of multicollinearity because the estimates are very sensitive to changes in the sample observations or in the model specification. In other words, including or excluding a particular variable or certain observations may greatly change the estimated coefficients. 
+
+
+**(iii) Confidence Intervals** 
+
+    Confidence intervals for the mean and for the forecast are equal to the point estimate plus-or-minus the appropriate standard error multiplied by the appropriate 2-tailed critical value of the t distribution. The critical value that should be used depends on the number of degrees of freedom for error (the number data points minus number of parameters estimated, which is n-1 for this model) and the desired level of confidence. So, for example, a 95% confidence interval for the forecast is given by 
+
+    Bo=(plus-or-minus) SEfcst + T.INV.2T(0.05,n-1)
+
+    In general, T.INV.2T(0.05, n-1) is fairly close to 2 except for very small samples, i.e., a 95% confidence interval for the forecast is roughly equal to the forecast plus-or-minus two standard errors. 
+
+**For Example:**
+
+    The issue that depends on the correctness of the model and the representativeness of the data set, particularly in the case of time series data.  If the model is not correct or there are unusual patterns in the data, then if the confidence interval for one period's forecast fails to cover the true value, it is relatively more likely that the confidence interval for a neighboring period's forecast will also fail to cover the true value, because the model may have a tendency to make the same error for several periods in a row.
+
+
+**b).What methods can be applied to deal with correlated errors? Mention at least one method.**
+
+As I mentioned if there's multicollinearity problem occurs in linear regression model or VIF for a factor is near or above 5.We can apply following methods.
+
+    1). Remove highly correlated predictors from the model- If we have two or more factor with a high variance inflation factor, remove one of the model.Because they supply redundant information, removing one of the correlated factors usually doesn't drastically reduce the R-squared.  We can consider using stepwise regression, best subsets regression, or specialized knowledge of the data set to remove these variables.We can select the model that has the highest R-squared value.
+
+    2).We can use Partial Least Squares Regression (PLS) or Principal Components Analysis (PCA), regression methods that cut the number of predictors to a smaller set of uncorrelated components.
