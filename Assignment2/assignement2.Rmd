@@ -1,0 +1,256 @@
+---
+title: 'CptS 475/575: Data Science, Fall 2018'
+author: "Sukhjinder Singh"
+output: pdf_document
+date: "16 September 2018"
+---
+                        Assignment 2: R basics and Exploratory Data Analysis
+                
+
+##Exercise 1: 
+
+(a) Use the read.csv() function to read the data into R. Call the loaded data college. Make sure that you have the directory set to the correct location for the data.
+```{r}
+college <- read.csv("https://scads.eecs.wsu.edu/wp-content/uploads/2017/09/College.csv")
+```
+(b) Look at the data using the fix() function. 
+``` {r}
+View(college)
+```
+
+You should notice that the first column is just the name of each university. We don’t really want R to treat this as data. However, it may be handy to have these names for later. Try the following commands
+```{r, echo=FALSE}
+rownames(college) <- college[, 1] 
+fix(college)
+```
+You should see that there is now a row.names column with the name of each university recorded.
+This means that R has given each row a name corresponding to the appropriate university. R will
+not try to perform calculations on the row names. However, we still need to eliminate the first
+column in the data where the names are stored. Try
+
+```{r, echo=FALSE}
+college =college [,-1]
+fix(college)
+```
+Now you should see that the first data column is Private. Note that another column labeled
+row.names now appears before the Private column. However, this is not a data column but rather
+the name that R is giving to each row.
+
+(c)
+
+i) Use the summary() function to produce a numerical summary of the variables in the
+data set. (Respond to this question with the mean graduation rate included in the
+summary result).
+```{r}
+summary(college)
+```
+ii) Use the pairs() function to produce a scatterplot matrix of the first ten columns or
+variables of the data. Recall that you can reference the first ten columns of a matrix A
+using A[,1:10].
+```{r}
+pairs(college[, 1:10])
+```
+
+iii) Use the plot() function to produce side-by-side boxplots of Outstate versus Private.\
+```{r,echo=FALSE}
+plot(college$Private, college$Outstate, xlab = "Private University", ylab = "Tuition in $")
+```
+
+**Boxplots of Outstate versus Private: Private universities have higher out of state tuition**
+
+iv) Create a new qualitative variable, called Top, by binning the Top10perc variable. We
+are going to divide universities into two groups based on whether or not the proportion of
+students coming from the top 25% of their high school classes exceeds 50%.
+```{r}
+Top <- rep("No", nrow(college))
+Top[college$Top25perc > 50] <- "Yes"
+Top <- as.factor(Top)
+college <- data.frame(college, Top)
+```
+Use the summary() function to see how many top universities there are.
+```{r}
+summary(college)
+```
+Now  use the plot() function to produce side-by-side boxplots of Outstate versus Top. Ensure that this figure has an appropriate title and axis labels. 
+
+```{r, echo=FALSE}
+plot(college$Outstate, college$Top,
+     xlab = "Outstate", ylab = "Top",title("Top Universities"))
+```
+
+**Boxplots of Outstate versus Top: Top universities have higher out of state tuition**
+
+v. Use the hist() function to produce some histograms with differing numbers of bins for a few of the quantitative variables. You may find the command par(mfrow=c(2,2)) useful: it will divide the print window into four regions so that four plots can be made simultaneously. Modifying the arguments to this function will divide the screen in other ways. Again, ensure that this figure has an appropriate title and axis labels.
+
+```{r}
+par(mfrow=c(2,2))
+hist(college$Apps, xlab = "Applications Received  in 2017", main = "")
+hist(college$perc.alumni, col=2, xlab = "% of alumni who donate", main = "")
+hist(college$S.F.Ratio, col=3, breaks=10, xlab = "Student/faculty ratio", main = "")
+hist(college$Grad.Rate, breaks=100, xlab = "Graduation Rate per student", main = "")
+```
+
+vi.Continue exploring the data, and provide a brief summary of what you discover. You
+may use additional plots or numerical descriptors as needed. Feel free to think outside
+the box on this one but if you want something to point you in the right direction, look at
+the summary statistics for various features, and think about what they tell you. Perhaps
+try plotting various features from the dataset against each other and see if any patterns
+emerge. 
+
+### Followings are the observations in the dataset
+
+1).Which university has the most liberal acceptance rate
+```{r,echo=FALSE}
+acceptance_rate <- college$Accept / college$Apps
+```
+
+
+```{r,echo=FALSE}
+row.names(college)[which.max(acceptance_rate)]
+```
+
+2).The university has the highest acceptance rate
+
+```{r}
+row.names(college)[which.max(acceptance_rate)]
+```
+
+3).Colleges with low acceptance rate tend to have low S:F ratio.
+
+```{r , echo=FALSE}
+plot(college$Accept / college$Apps, college$S.F.Ratio) 
+```
+
+4). The university with the most students in the top 10% of class
+
+```{r}
+row.names(college)[which.max(college$Top25perc)]  
+```
+
+5).High tuition correlates to high graduation rate
+
+```{r}
+plot(Grad.Rate ~ Outstate, data = college) 
+```
+
+#Exercise 2
+
+This exercise involves the Auto.csv data set found on the course website. Make sure that the
+missing values have been removed from the data. To do this, consider the na.strings parameter of
+read.csv(), as well as the na.omit() function.
+
+```{r,echo=FALSE}
+Auto <- read.csv("http://www-bcf.usc.edu/~gareth/ISL/Auto.csv",header = TRUE, na.strings = "?")
+Auto <- na.omit(Auto)
+dim(Auto)
+```
+
+```{r}
+summary(Auto)
+```
+
+(a) Which of the predictors are quantitative, and which are qualitative?
+**I have used integer value for qualtitaive variables such as 1,2,3.**
+
+```{r}
+Auto$originf <- factor(Auto$origin, labels = c("American", "Europian", "Japanese"))
+with(Auto, table(originf, origin))
+```
+
+**Quantitative:** mpg, cylinders, displacement, horsepower, weight, acceleration, year.
+
+**Qualitative:** name, origin, originf
+
+(b) What is the range of each quantitative predictor? You can answer this using the range() function.
+Hint: consider using R’s sapply() function to take the range of multiple features
+in a single function call.
+
+```{r}
+#Qualitative predictors are followings
+qualitative_columns <- which(names(Auto) %in% c("name", "origin", "originf"))
+qualitative_columns
+```
+
+```{r}
+# Apply the range function to the columns of Auto data that are not qualitative
+sapply(Auto[, -qualitative_columns], range)
+```
+
+(c) What is the mean and standard deviation of each quantitative predictor?
+
+```{r}
+#Calculating mean
+sapply(Auto[, -qualitative_columns], mean)
+```
+```{r}
+#Calculating Standard Deviation
+sapply(Auto[, -qualitative_columns], sd)
+```
+
+(d) Now remove the 25th through 75th observations. What is the range, mean, and standard deviation of each predictor in the subset of the data that remains?
+
+```{r}
+sapply(Auto[-seq(25, 75), -qualitative_columns], mean)
+```
+```{r}
+sapply(Auto[-seq(25, 75), -qualitative_columns], sd)
+```
+
+(e) Using the full data set, investigate the predictors graphically, using scatterplots or
+other tools of your choice. Create some plots highlighting the relationships among the predictors.
+Comment on your findings.
+
+```{r}
+# Part (e):
+pairs(Auto)
+```
+
+```{r}
+pairs(Auto[, -qualitative_columns])
+```
+
+```{r}
+
+# Lower mpg correlates with Heavier weight.
+plot(mpg ~ weight, data=Auto)
+```
+
+```{r}
+
+# less mpg, more cylinders.
+with(Auto, plot(mpg, cylinders))
+```
+
+```{r}
+# Cars become more efficient over time.
+with(Auto, plot(mpg, year))
+```
+
+Plotting some mpg vs. some of our qualitative features for first 30 samples: 
+
+```{r}
+#observation of 30 samples
+Auto.sample <- Auto[sample(1:nrow(Auto), 30), ]
+
+# order them
+Auto.sample <- Auto.sample[order(Auto.sample$mpg), ]
+
+# plot them using a "dotchart"
+with(Auto.sample, dotchart(mpg, name, xlab = "mpg"))
+```
+
+Box plot based on origin:
+
+```{r}
+with(Auto, plot(originf, mpg), ylab = "mpg")
+```
+
+(f) Suppose that we wish to predict gas mileage (mpg) on the basis of the other variables.
+Do your plots suggest that any of the other variables might be useful in predicting mpg? Justify
+your answer.
+
+```{r}
+pairs(Auto)
+```
+
+In the description, All the predictor mpg show some correlations with millage(mpg). The name predictor mpg has too little observations per name, so if we using this as a predictor is likely to get the results in overfitting the data and this dataset will not be able to well generalized.
