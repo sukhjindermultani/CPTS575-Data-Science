@@ -1,0 +1,45 @@
+
+
+```{r}
+library(tidyverse)
+```
+
+I am taking different scenario based on country selection, population and years. I am calculating the rate based on cases and population.
+```{r}
+countries <- filter(table2, type == 'cases')$country
+years <- filter(table2, type == 'cases')$year
+cases <- filter(table2, type == 'cases')$count
+populations <- filter(table2, type == 'population')$count
+
+table2_rate <- tibble(country = countries,
+                      year = years,
+                      rate = cases/populations * 10000)
+
+table2_rate
+```
+
+With the previous information, I visualize the result based on country and rows of cases
+
+```{r}
+ggplot(data = filter(table2, type == 'cases'),
+       mapping = aes(x = year, y= count)) +
+  geom_line(mapping = aes(group = country),
+            color = 'grey50') +
+  geom_point(mapping = aes(color = country)) + 
+  labs(y = 'cases') +
+  scale_x_continuous(breaks = (c(1999,2000)))
+```
+
+Similarly, for the whole year in the respect of the country
+
+```{r}
+who %>%
+  group_by(country) %>%
+  summarize(year_min = min(year), year_max = max(year)) %>%
+  ggplot() +
+  geom_point(mapping = aes(x = country, y = year_min), color = 'red') +
+  geom_point(mapping = aes(x = country , y= year_max), color = 'blue') +
+  coord_flip()
+
+```
+

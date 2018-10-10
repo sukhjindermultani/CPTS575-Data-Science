@@ -1,0 +1,256 @@
+---
+title: "CptS 475/575: Data Science, Fall 2018"
+author: "Sukhjinder Singh"
+date: "20 September 2018"
+output: pdf_document
+---
+
+Load the data into R, and check the first few rows for abnormalities. You will likely notice
+several.
+```{r}
+library(dplyr)
+```
+
+```{r}
+msleep <- read.csv("https://scads.eecs.wsu.edu/wp-content/uploads/2017/10/msleep_ggplot2.csv")
+```
+
+```{r}
+summary(msleep)
+```
+
+Use select() to print the head of the columns with a title including “sleep”.
+
+```{r}
+head(msleep)
+```
+
+a). Use filter() to count the number of animals which weigh over 50 kilograms and sleep more
+than 6 hours a day.
+
+```{r}
+filter(msleep, sleep_total >6, bodywt > 50)
+```
+
+b).Use piping (%>%), select() and arrange() to print the name, order, sleep time and bodyweight
+of the animals with the top 6 sleep times, in order of sleep time.
+
+
+```{r echo=TRUE}
+msleep %>% 
+    select(name, order, sleep_total,bodywt) %>%
+    arrange(order, sleep_total) %>% 
+    filter(sleep_total >= 17.4)
+```
+
+c).Use mutate to add two new columns to the dataframe; wt_ratio with the ratio of brain size to
+body weight, rem_ratio with the ratio of rem sleep to sleep time. If you think they might be
+useful, feel free to extract more features than these, and describe what they are
+
+
+```{r}
+msleep %>% 
+    mutate(rem_ratio = sleep_rem / sleep_total, 
+           wt_ratio = brainwt/bodywt ) %>%
+    head
+```
+
+
+d).Use group_by() and summarize() to display the average, min and max sleep times for each
+order. Remember to use ungroup() when you are done.
+
+
+```{r}
+msleep %>% 
+    group_by(order) %>%
+    summarise(avg_sleep = mean(sleep_total), 
+              min_sleep = min(sleep_total), 
+              max_sleep = max(sleep_total),
+              total = n())
+```
+
+
+```{r}
+ungroup(msleep)
+```
+
+
+e).Make a copy of your dataframe, and use group_by() and mutate() to impute the missing brain
+weights as the average wt_ratio for that animal’s order times the animal’s weight. Make a 2
+second copy of your dataframe, but this time use group_by() and mutate() to impute missing
+brain weights with the average brain weight for that animal’s order. What assumptions do
+these data filling methods make? Which is the best way to impute the data, or do you see a
+better way, and why? You may impute or remove other variables as you find appropriate.
+Briefly explain your decisions.
+
+```{r}
+Firstcopy=data.frame(msleep)
+head(Firstcopy)
+```
+
+```{r}
+Firstcopy %>% 
+            group_by(order) %>%
+            mutate(brainwt = ifelse(is.na(brainwt),((mean(brainwt, na.rm = TRUE)/mean(bodywt, na.rm =  TRUE)) * bodywt), brainwt))
+```
+
+```{r}
+secondcopy=data.frame(msleep)
+
+secondcopy %>% 
+            group_by(order) %>%
+           mutate( brainwt = ifelse(is.na(brainwt), mean(brainwt, na.rm = TRUE), brainwt))
+```
+**What assumptions do these data filling methods make? Which is the best way to impute the data, or do you see a better way, and why? You may impute or remove other variables as you find appropriate.Briefly explain your decisions**
+
+These method 
+
+
+
+Exercise 2
+
+For this question, you will first need to read section 12.6 in the R for Data Science
+book, here (http://r4ds.had.co.nz/tidy-data.html#case-study). Grab the dataset from the tidyr
+package, and tidy it as shown in the case study before answering the following questions
+
+```{r}
+library(tidyverse)
+library(tidyr)
+```
+
+```{r}
+readdata = read.csv("TB_notification.csv")
+summary(readdata)
+```
+
+```{r}
+table1
+table2
+table3
+table4a
+table4b
+```
+
+a)Explain why this line > mutate(key = stringr::str_replace(key, "newrel", "new_rel"))
+is necessary to properly tidy the data. 
+
+This dataset contains
+  1). It looks like country, iso2 and iso3 are three variables that redundantly specify the country.
+  2). We dont know about what all other columns are yet, but given the structure in the variables name     (new_sp_m014, new_ep_m014, new_ep_f014) these are likely to be values, not variables. 
+  
+In this dataset, we need to make some minor changes to fix the format of the columns name because the names are slightly inconsistent. As we seen in the statement we have newrel instead of new_rel (its difficult to spot this here but if we don't fix it we will get the errors in subsequent steps). So, using the idea of replacing the characters "newrel" with "new_rel". This makes all variable names consistent.
+
+**What happens if you neglect the mutate() step? **
+
+First Solution
+
+We can neglect the mutate step only if we know that all cases are new and we just parse the case type after the 3rd character. 
+
+Second Solution
+
+The separate() function emits the warning “too few values”. If we check the rows for keys beginning with "newrel_", we see that sexage is missing, and type = m014.
+
+```{r}
+who1 <-  readdata %>%gather(new_sp:hiv_reg_new2, key = "key",value="cases",na.rm=TRUE)
+who1 %>% count(key)
+who2 <-  who1 %>% mutate(key = stringr::str_replace(key, "newrel", ""))
+who3 <-  who2 %>%separate(key, c("new","type", "sexage"), sep="_")
+who3
+```
+
+
+b) How many entries are removed from the dataset when you set na.rm to true in the gather
+command (in this dataset). How else could those NA values be handled? Among these
+options, which do you think is the best way to handle those missing values for this
+dataset, and why?
+
+**How many entries are removed from the dataset when you set na.rm to true in the gather command (in this dataset)**
+
+To give this question answer, i would need to know more about the data generation process. There are zero’s in the data, which means they may explicitly be indicating no cases. To get the zero's in the dataset, below is the r command.
+
+```{r}
+who1 <- readdata %>%
+  gather(new_sp:hiv_reg_new2, key = "key", value = "cases", na.rm = TRUE)
+view(who1)
+```
+
+**How else could those NA values be handled? Among these options, which do you think is the best way to handle those missing values for this dataset, and why?**
+
+There are Two R functions which deal with the NA values using Fill argument.
+
+  1). In Spread(), all NA values are replaced by the fill value. The fill argument only takes in one value.
+  2). In complete(), all NA values are  under different variables can be replaced by different values. The fill argument takes in a list that specifies the values to replace NA for different variables.
+  
+Considering the best way to handle missing values for this dataset is using Gather() and Spread() function because we have the count for the indiviuals columns who has TRUE(NA) and False(value) counts. Now, these missing value could be informative. After analysing the dataset, I have found that most countries have loads of missing values ! we can decide to remove all the missing values from dataset using readdata very easily with na.omit(). In the following commands, I showed the whole process for getting the NA values and omiting the NA values.
+
+c) Explain the difference between an explicit and implicit missing value, in general. Can
+you find any implicit missing values in this dataset, if so where?
+
+In the dataset, a value can be missing in the two possible ways.
+  1). Explicitly which means dataset flagged with "NA" values which we have in this dataset as i showed in the previous example.
+  2). Implicitly which means simply nothing present in the dataset. for example, it could be one or more empty row or has zero in the country column in this dataset.
+  
+  **Implicity missing values in this dataset**
+  
+```{r}
+  who1 %>% 
+  filter(cases == 0) %>% 
+  nrow()
+```
+  
+
+d) Looking at the features (country, year, var, sex, age, cases) in the tidied data, are they all
+appropriately typed? Are there any features you think would be better suited as a different
+type? Why or why not?
+
+```{r}
+who4 <- who3 %>%select(-new, -iso2,-iso3)
+who5 <- who4  %>% separate(sexage, c("Sex","Age"), sep = 1)
+view(who5)
+```
+
+**Explain in your own words what a gather operation is, and give an example of a situation when it might be useful. Do the same for spread**
+
+Gather operation will take multiple columns and collapse them into key-value pairs, duplicating all other column needed.
+
+```{r}
+who <- gather(readdata, "code", "value", new_sp:hiv_reg_new2)
+View(who)
+```
+
+Spread operation function spreads a key-value pair across multiple columns.To use spread(), pass it the name of a data frame, then the name of the key column in the data frame, and then the name of the value column. Pass the column names as they are; do not use quotes.
+
+```{r}
+spread(table2, key=type, value=count)
+```
+
+
+**Generate an informative visualization, which shows something about the data. Give a brief description of what it shows, and why you thought it was interesting.**
+
+```{r}
+tb_data_wide <- readdata %>% 
+  mutate(newrel_sexunk014 = as.numeric(newrel_sexunk014)) %>%
+  mutate(new_sn_sexunk014 = as.numeric(new_sn_sexunk014))
+
+who <- tb_data_wide %>%
+    gather("code", "N", new_sp_m014:newrel_sexunk014, na.rm = TRUE)
+
+who <- who %>% mutate(code = stringr::str_replace(code, "newrel", "new_rel"))
+
+who <- who %>% separate(code, c("new_old", "case_type", "sex_age"), sep = "_")
+
+who <- who %>% separate(sex_age, c("sex", "age_group"), sep = 1)
+
+
+this_group  <- group_by(who, country, year, sex)
+who1 <- dplyr::summarise(this_group, N = sum(N, na.rm = TRUE)) %>%
+    as.data.frame()
+
+ggplot(who1, aes(x = year, y = N/1e+6, col = sex, group = sex)) +
+    geom_line() +
+    # geom_point() +
+    facet_wrap(~reorder(country, -N), ncol = 10) +
+    labs(x = "Source: World Health Organization (2017)", y = "In millions", title = "Number of annual cases of TB") +
+    theme_light()
+```
+
